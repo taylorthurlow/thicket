@@ -26,6 +26,8 @@ module Thicket
         puts "Stopped after #{@options[:limit]} commits. More commit history exists."
         break
       end
+    rescue Errno
+      puts "CAUGHT!"
     end
 
     # Takes a single line of raw, colored git log output and manipulates it
