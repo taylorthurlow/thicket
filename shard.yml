@@ -5,7 +5,7 @@ authors:
   - Taylor Thurlow <taylorthurlow8@gmail.com>
 
 targets:
-  thicket-cr:
+  thicket:
     main: src/thicket.cr
 
 crystal: 0.28.0
