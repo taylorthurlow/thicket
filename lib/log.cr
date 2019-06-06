@@ -3,7 +3,7 @@ require "time_measure"
 
 module Thicket
   class Log
-    TERMINAL_WIDTH = `tput cols`.to_i16
+    TERMINAL_WIDTH  = `tput cols`.to_i16
     LOG_PARSE_REGEX = /[a-f0-9]{7}.+?m(.+?) .+?m\{(.+?)\}.+?m (?:\((.+?)\))?.+?m(.+$)/
 
     def initialize(@options : Hash = {} of Symbol => String)
@@ -71,10 +71,10 @@ module Thicket
       original_refs = refs
 
       main_remote = if @options.has_key?(:main_remote)
-        @options[:main_remote]
-      else
-        "origin"
-      end
+                      @options[:main_remote]
+                    else
+                      "origin"
+                    end
 
       refs = strip_color(refs).split(",").map { |s| s.strip }
       tags = [] of String
@@ -88,15 +88,16 @@ module Thicket
       end
 
       refs_to_delete = [] of String
-      refs.each do |r|
+      refs.each_with_index do |r, i|
         refs_to_delete << r if r == "#{main_remote}/HEAD"
+
         next if r.starts_with?("#{main_remote}/")
 
         ref_without_head = r.sub("HEAD -> ", "")
         branch = "#{main_remote}/#{ref_without_head}"
         if refs.includes?(branch)
           refs_to_delete << branch
-          r += "#"
+          refs[i] = "#{r}#"
         end
 
         if r.starts_with?("tag:")
@@ -106,13 +107,13 @@ module Thicket
       end
 
       if head_ref_index
-        refs[head_ref_index] = refs[head_ref_index].sub("HEAD -> ", "@")
+        refs[head_ref_index] = refs[head_ref_index].not_nil!.sub("HEAD -> ", "@")
       end
 
       refs_to_delete.each { |r| refs.delete(r) }
 
       refs = if refs.any?
-               "(#{refs.join(", ")})"
+               "(#{refs.compact.join(", ")})"
              else
                ""
              end
