@@ -1,7 +1,7 @@
 require "option_parser"
 
-require "log"
-require "version"
+require "./thicket/log"
+require "./thicket/version"
 
 module Thicket
   options = {} of Symbol => String

@@ -1,5 +1,6 @@
 require "file_utils"
-require "time_measure"
+
+require "./time_measure"
 
 module Thicket
   class Log
