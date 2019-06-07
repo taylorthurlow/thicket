@@ -17,3 +17,8 @@ executables:
 crystal: 0.29.0
 
 license: MIT
+
+development_dependencies:
+  ameba:
+    github: veelenga/ameba
+    version: ~> 0.10
