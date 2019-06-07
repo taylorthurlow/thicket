@@ -9,7 +9,7 @@ description: |
 
 targets:
   thicket:
-    main: src/thicket.cr
+    main: src/runner.cr
 
 executables:
   - thicket

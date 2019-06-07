@@ -1,0 +1,3 @@
+require "./thicket"
+
+Thicket.run
