@@ -4,10 +4,16 @@ version: 0.1.0
 authors:
   - Taylor Thurlow <taylorthurlow8@gmail.com>
 
+description: |
+  A wrapper for git's one-line log that makes things just a bit cleaner.
+
 targets:
   thicket:
     main: src/thicket.cr
 
-crystal: 0.28.0
+executables:
+  - thicket
+
+crystal: 0.29.0
 
 license: MIT
