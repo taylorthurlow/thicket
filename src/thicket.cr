@@ -9,7 +9,7 @@ module Thicket
   @@options = {} of Symbol => String
 
   def self.run
-    OptionParser.parse! do |parser|
+    OptionParser.parse do |parser|
       parser.banner = "Usage: thicket [options]"
 
       parser.on("-v", "--version", "Print the version number") do |v|
