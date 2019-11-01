@@ -56,7 +56,7 @@ module Thicket
       seconds_ago = (Time.utc - Time.parse_iso8601(time_string)).total_seconds.to_i64
       measure = TimeMeasure.measures.find { |m| m.threshold_in_seconds < seconds_ago }
       raise "Unable to find applicable measure" if measure.nil?
-      quantity = (seconds_ago / measure.length_in_seconds).floor
+      quantity = (seconds_ago / measure.length_in_seconds).floor.to_i64
 
       to_sub = String.build do |str|
         str << "#{quantity}#{measure.abbreviation}"
