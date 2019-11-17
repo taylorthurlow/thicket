@@ -54,7 +54,9 @@ module Thicket
     # log string with a formatted version.
     private def process_date_time(time_string : String, line : String, have_refs : Bool) : String
       seconds_ago = (Time.utc - Time.parse_iso8601(time_string)).total_seconds.to_i64
-      measure = TimeMeasure.measures.find { |m| m.threshold_in_seconds < seconds_ago }
+      seconds_ago = 0 if seconds_ago < 0 # Commits can be in the future
+      measure = TimeMeasure.measures.find { |m| m.threshold_in_seconds <= seconds_ago }
+
       raise "Unable to find applicable measure" if measure.nil?
       quantity = (seconds_ago / measure.length_in_seconds).floor.to_i64
 
