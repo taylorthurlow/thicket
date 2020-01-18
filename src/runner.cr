@@ -1,3 +1,0 @@
-require "./thicket"
-
-Thicket.run

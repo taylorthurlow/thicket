@@ -71,3 +71,5 @@ module Thicket
     Thicket::Log.new(@@options).print
   end
 end
+
+Thicket.run
