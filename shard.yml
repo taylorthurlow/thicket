@@ -1,5 +1,5 @@
 name: thicket
-version: 0.1.0
+version: 0.1.1
 
 authors:
   - Taylor Thurlow <taylorthurlow8@gmail.com>
@@ -14,6 +14,6 @@ targets:
 executables:
   - thicket
 
-crystal: 0.29.0
+crystal: 0.32.1
 
 license: MIT
