@@ -12,6 +12,11 @@ module Thicket
     OptionParser.parse do |parser|
       parser.banner = "Usage: thicket [options]"
 
+      parser.on("-h", "--help", "Print this help") do
+        puts parser
+        exit
+      end
+
       parser.on("-v", "--version", "Print the version number") do |v|
         puts Thicket::VERSION
         exit
