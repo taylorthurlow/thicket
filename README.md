@@ -43,3 +43,10 @@ Usage: thicket [options]
 ## Contributing
 
 Please open an issue regarding any changes you wish to make before starting to work on anything. I am always open to providing assistance, so if you need to ask any questions please don't hesitate to do so, whether it be how to approach solving a problem or questions regarding how I might prefer something be implemented.
+
+### Building
+
+```bash
+shards install
+crystal build --release src/thicket.cr -o bin/thicket
+```
