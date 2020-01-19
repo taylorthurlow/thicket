@@ -203,7 +203,7 @@ module Thicket
     end
 
     private def terminal_width : Int16
-      if ENV["TERM"].blank?
+      if ENV["TERM"]?.nil? || ENV["TERM"].blank?
         80.to_i16
       else
         # Not sure why this assignment is required, but it seems like `tput
