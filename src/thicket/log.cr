@@ -27,7 +27,7 @@ module Thicket
         break
       end
     rescue Errno
-      puts "CAUGHT!"
+      exit 1
     end
 
     # Takes a single line of raw, colored git log output and manipulates it
