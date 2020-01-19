@@ -207,14 +207,18 @@ module Thicket
       end
     end
 
+    @terminal_width : Int16?
+
     private def terminal_width : Int16
-      if ENV["TERM"]?.nil? || ENV["TERM"].blank?
-        80.to_i16
-      else
-        # Not sure why this assignment is required, but it seems like `tput
-        # cols` is being evaluated even when run with `TERM-""`
-        ENV["TERM"] ||= "xterm"
-        `tput cols`.to_i16
+      @terminal_width ||= begin
+        if ENV["TERM"]?.nil? || ENV["TERM"].blank?
+          80.to_i16
+        else
+          # Not sure why this assignment is required, but it seems like `tput
+          # cols` is being evaluated even when run with `TERM-""`
+          ENV["TERM"] ||= "xterm"
+          `tput cols`.to_i16
+        end
       end
     end
   end
