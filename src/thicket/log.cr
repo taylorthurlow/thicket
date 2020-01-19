@@ -196,7 +196,12 @@ module Thicket
 
     private def git_working_directory : String
       if @options.has_key? :project_directory
-        @options[:project_directory]
+        if Dir.exists?(@options[:project_directory])
+          @options[:project_directory]
+        else
+          puts "The provided directory does not exist."
+          exit 1
+        end
       else
         Dir.current
       end
