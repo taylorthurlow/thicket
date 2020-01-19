@@ -4,7 +4,6 @@ require "./time_measure"
 
 module Thicket
   class Log
-    TERMINAL_WIDTH  = `tput cols`.to_i16
     LOG_PARSE_REGEX = /[a-f0-9]{7}.+?m(.+?) .+?m\{(.+?)\}.+?m (?:\((.+?)\))?.+?m(.+$)/
 
     def initialize(@options : Hash = {} of Symbol => String)
@@ -153,11 +152,11 @@ module Thicket
     private def process_author_name(author : String, line : String)
       line = line.sub("\e[34m{#{author}}\e[31m ", "")
       total_length = strip_color(line).size
-      over = (total_length + author.size + 1) - TERMINAL_WIDTH
+      over = (total_length + author.size + 1) - terminal_width
       line = line[0...-over] if over > 0
 
       total_length = strip_color(line).size
-      spaces_needed = TERMINAL_WIDTH - total_length - author.size - 2
+      spaces_needed = terminal_width - total_length - author.size - 2
 
       String.build do |str|
         if spaces_needed < 0
@@ -200,6 +199,17 @@ module Thicket
         @options[:project_directory]
       else
         Dir.current
+      end
+    end
+
+    private def terminal_width : Int16
+      if ENV["TERM"].blank?
+        80.to_i16
+      else
+        # Not sure why this assignment is required, but it seems like `tput
+        # cols` is being evaluated even when run with `TERM-""`
+        ENV["TERM"] ||= "xterm"
+        `tput cols`.to_i16
       end
     end
   end
