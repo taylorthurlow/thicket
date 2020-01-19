@@ -1,5 +1,4 @@
 [![GitHub release](https://img.shields.io/github/release/taylorthurlow/thicket.svg)](https://github.com/taylorthurlow/thicket/releases)
-[![Build Status](https://travis-ci.com/taylorthurlow/thicket.svg?branch=develop)](https://travis-ci.com/taylorthurlow/thicket)
 ![Specs](https://github.com/taylorthurlow/thicket/workflows/specs/badge.svg)
 ![Build](https://github.com/taylorthurlow/thicket/workflows/publish/badge.svg)
 
