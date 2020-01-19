@@ -4,17 +4,16 @@ on: [push]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     container:
-      image: crystallang/crystal
+      image: crystallang/crystal:0.32.1
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Install dependencies
-      run: shards install
-    - name: Check formatting
-      run: crystal tool format --check
-    - name: Run tests
-      run: crystal spec
+      - uses: actions/checkout@v1
+      - name: Install dependencies
+        run: shards install
+      - name: Check formatting
+        run: crystal tool format --check
+      - name: Run tests
+        run: crystal spec
