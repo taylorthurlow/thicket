@@ -3,7 +3,7 @@ name: Specs
 on: [push]
 
 jobs:
-  build:
+  run-specs:
     runs-on: ubuntu-latest
 
     container:
