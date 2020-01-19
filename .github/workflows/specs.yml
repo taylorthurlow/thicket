@@ -1,4 +1,4 @@
-name: Specs
+name: specs
 
 on: [push]
 
