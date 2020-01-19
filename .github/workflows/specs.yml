@@ -16,4 +16,6 @@ jobs:
       - name: Check formatting
         run: crystal tool format --check
       - name: Run tests
-        run: crystal spec
+        run: |
+          crystal -v
+          crystal spec

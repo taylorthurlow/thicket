@@ -33,6 +33,7 @@ jobs:
       - name: Compile release
         run: |
           mkdir -p bin
+          crystal -v
           crystal build src/thicket.cr --release -o bin/${{ matrix.artifact_name }}
           chmod +x bin/${{ matrix.artifact_name }}
       - name: Add binaries to release
