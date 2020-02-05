@@ -49,6 +49,14 @@ module Thicket
       new_line || line
     end
 
+    private def name_to_initials(name : String) : String
+      names = name.strip.split(/\s+/)
+
+      return name unless names.size >= 2
+
+      names.map { |name| name.chars.first }.join
+    end
+
     # Takes an input log string and a commit date/time and replaces it in the
     # log string with a formatted version.
     private def process_date_time(time_string : String, line : String, have_refs : Bool) : String
@@ -151,6 +159,7 @@ module Thicket
     # position in the string to a right-justified location.
     private def process_author_name(author : String, line : String)
       line = line.sub("\e[34m{#{author}}\e[31m ", "")
+      author = name_to_initials(author) if @options[:initials]?
       total_length = strip_color(line).size
       over = (total_length + author.size + 1) - terminal_width
       line = line[0...-over] if over > 0

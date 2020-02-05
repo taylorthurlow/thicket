@@ -46,6 +46,10 @@ module Thicket
         @@options[:consolidate_refs] = r
       end
 
+      parser.on("--initials", "Condense author full names into initials") do |value|
+        @@options[:initials] = value
+      end
+
       parser.on("--main-remote=MAIN_REMOTE", "The name of the primary remote, defaults to 'origin'") do |m|
         if m.nil?
           STDERR.puts "You must provide the name of the main remote."
