@@ -26,7 +26,7 @@ module Thicket
         puts "Stopped after #{@options[:limit]} commits. More commit history exists."
         break
       end
-    rescue Errno
+    rescue IO::Error
       exit 1
     end
 
