@@ -22,6 +22,10 @@ module Thicket
         exit
       end
 
+      parser.on("-e", "--experimental", "Use true git graph parsing") do |v|
+        @@options[:experimental] = v
+      end
+
       parser.on("-d", "--directory=DIRECTORY", "Path to the project directory") do |d|
         if d.nil?
           STDERR.puts "You must provide a project directory."
