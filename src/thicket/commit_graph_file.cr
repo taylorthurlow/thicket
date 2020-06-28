@@ -2,10 +2,13 @@
 module Thicket
   class CommitGraphFile
     getter file_path : String
+
     getter version : UInt8
     getter hash_version : UInt8
     getter num_chunks : UInt8
     getter num_base_commit_graphs : UInt8
+    
+    getter num_commits : UInt32
     
     def initialize(@file_path)
       file = File.new(@file_path, "rb")
@@ -18,26 +21,22 @@ module Thicket
       @num_base_commit_graphs = file.read_at(7, 1, &.read_byte).not_nil!
 
       # Chunk data
-      chunk_table = [] of { signature: String, offset_bytes: UInt64 }
-      current_byte = 8
-      loop do
-        chunk_signature = file.read_at(current_byte, 4, &.read_string(4))
-        break if chunk_signature == "\0\0\0\0"
-        puts "Encountered signature: #{chunk_signature.inspect}"
-        
-        chunk_offset_bytes = begin
-          slice = Bytes.new(8)
-          file.read_at(current_byte + 4, 8, &.read(slice))
-          slice.reverse!
-          slice.to_unsafe.as(UInt64*).value
-        end
+      contents = chunk_table_of_contents(file)
+      oid_fanout_index = contents.index { |c| c[:signature] == "OIDF" }.not_nil!
+      oid_fanout_offset = contents[oid_fanout_index][:offset]
+      next_offset = contents[oid_fanout_index + 1][:offset]
+      oid_fanout_length = next_offset - oid_fanout_offset
+      slice = Bytes.new(1024)
+      file.read_at(oid_fanout_offset.to_i32, oid_fanout_length.to_i32, &.read(slice))
+      slice.reverse!
+      fanout = slice.each_slice(4)
+                    .map { |integer_slice| integer_slice.to_unsafe.as(UInt32*).value }
+                    .to_a
+                    .reverse
 
-        chunk_table << { signature: chunk_signature, offset_bytes: chunk_offset_bytes }
+      @num_commits = fanout.last
 
-        current_byte += 12
-      end
-
-      pp chunk_table
+      puts "Total number of commits: #{@num_commits}"
 
       file.close
     end
@@ -50,28 +49,40 @@ module Thicket
       end
     end
 
-#    private def chunk_at(file : File, index : UInt8) : CommitGraphChunk
-#      
-#      # each chunk header is 12 bytes
-#      chunk_header_start : UInt32 = (index.to_u32 + 1) * 12 
-#
-#      id : String = file.read_at(chunk_header_start.to_i32, 4, &.read_string(4))
-#      puts id
-#      # raise "encountered terminating label" if id == 0
-#      
-#      slice = Bytes.new(8)
-#      file.read_at(chunk_header_start.to_i32 + 4, 8, &.read(slice))
-#      file_offset = slice.to_unsafe.as(UInt64*).value
-#
-#      return CommitGraphChunk.new(id, file_offset, file)
-#    end
-  end
+    private def chunk_table_of_contents(file : File) : Array({ signature: String, offset: UInt64 })
+      contents = [] of { signature: String, offset: UInt64 }
 
-#  class CommitGraphChunk
-#    getter id : String
-#    getter file_offset : UInt64
-#
-#    def initialize(@id, @file_offset, file)
-#    end
-#  end
+      current_byte = 8
+      
+      loop do
+        chunk_signature = file.read_at(current_byte, 4, &.read_string(4))
+        break if chunk_signature == "\0\0\0\0"
+        
+        chunk_offset_bytes = begin
+          slice = Bytes.new(8)
+          file.read_at(current_byte + 4, 8, &.read(slice))
+          slice.reverse!
+          slice.to_unsafe.as(UInt64*).value
+        end
+
+        contents << { signature: chunk_signature, offset: chunk_offset_bytes }
+
+        current_byte += 12
+      end
+
+      if contents.none? { |c| c[:signature] == "OIDF" }
+        raise "Unable to find OID Fanout chunk in commit graph file."
+      end
+
+      if contents.none? { |c| c[:signature] == "OIDL" }
+        raise "Unable to find OID Lookup chunk in commit graph file."
+      end
+      
+      if contents.none? { |c| c[:signature] == "CDAT" }
+        raise "Unable to find Commit Data chunk in commit graph file."
+      end
+
+      contents.sort_by { |c| c[:offset] }
+    end
+  end
 end
