@@ -8,6 +8,7 @@ module Thicket
     getter num_chunks : UInt8
     getter num_base_commit_graphs : UInt8
     
+    getter oid_fanout : Array(UInt32)
     getter num_commits : UInt32
     getter commit_oids : Array(String)
     
@@ -21,46 +22,16 @@ module Thicket
       @num_chunks = file.read_at(6, 1, &.read_byte).not_nil!
       @num_base_commit_graphs = file.read_at(7, 1, &.read_byte).not_nil!
 
-      # OID Fanout
       contents = chunk_table_of_contents(file)
       pp contents
-      oid_fanout_index = contents.index { |c| c[:signature] == "OIDF" }.not_nil!
-      oid_fanout_offset = contents[oid_fanout_index][:offset]
-      oid_fanout_length = if contents[oid_fanout_index + 1]?
-        contents[oid_fanout_index + 1][:offset] - oid_fanout_offset
-      else
-        # Exclude trailer hash if necessary
-        file.size - commit_hash_length - oid_fanout_offset
-      end
-      slice = Bytes.new(1024)
-      file.read_at(oid_fanout_offset.to_i32, oid_fanout_length.to_i32, &.read(slice))
-      slice.reverse!
-      fanout = slice.each_slice(4)
-                    .map { |integer_slice| integer_slice.to_unsafe.as(UInt32*).value }
-                    .to_a
-                    .reverse
 
-      @num_commits = fanout.last
-
-      # OID Lookup
-      oid_lookup_index = contents.index { |c| c[:signature] == "OIDL" }.not_nil!
-      oid_lookup_offset = contents[oid_lookup_index][:offset]
-      oid_lookup_length = if contents[oid_lookup_index + 1]?
-        contents[oid_lookup_index + 1][:offset] - oid_lookup_offset
-      else
-        # Exclude trailer hash if necessary
-        file.size - commit_hash_length - oid_lookup_offset
-      end
-      slice = Bytes.new(@num_commits * commit_hash_length)
-      file.read_at(oid_lookup_offset.to_i32, oid_lookup_length.to_i32, &.read(slice))
-      slice.reverse!
-      @commit_oids = [] of String
-      num_commits.times do |i|
-        start = i * commit_hash_length
-        subslice = slice[start, commit_hash_length]
-        @commit_oids << subslice.to_a.map { |b| sprintf("%02x", b) }.reverse.join
-      end
-      @commit_oids.reverse!
+      @oid_fanout = parse_oid_fanout(file, contents)
+      @num_commits = @oid_fanout.last
+      puts "Number of commits: #{@num_commits}"
+      
+      @commit_oids = parse_oid_lookup(file, contents)
+      puts "First commit: #{@commit_oids.first[0..6]}"
+      puts " Last commit: #{@commit_oids.last[0..6]}"
 
       file.close
     end
@@ -117,6 +88,58 @@ module Thicket
       end
 
       contents.sort_by { |c| c[:offset] }
+    end
+
+    private def parse_oid_fanout(
+      file : File,
+      contents : Array({ signature: String, offset: UInt64 })
+    ) : Array(UInt32)
+      oid_fanout_index = contents.index { |c| c[:signature] == "OIDF" }.not_nil!
+      oid_fanout_offset = contents[oid_fanout_index][:offset]
+      
+      oid_fanout_length = if contents[oid_fanout_index + 1]?
+        contents[oid_fanout_index + 1][:offset] - oid_fanout_offset
+      else
+        # Exclude trailer hash if necessary
+        file.size - commit_hash_length - oid_fanout_offset
+      end
+
+      slice = Bytes.new(1024)
+      file.read_at(oid_fanout_offset.to_i32, oid_fanout_length.to_i32, &.read(slice))
+      slice.reverse!
+      
+      slice.each_slice(4)
+           .map { |integer_slice| integer_slice.to_unsafe.as(UInt32*).value }
+           .to_a
+           .reverse
+    end
+
+    private def parse_oid_lookup(
+      file : File,
+      contents : Array({ signature: String, offset: UInt64 })
+    ) : Array(String)
+      oid_lookup_index = contents.index { |c| c[:signature] == "OIDL" }.not_nil!
+      oid_lookup_offset = contents[oid_lookup_index][:offset]
+
+      oid_lookup_length = if contents[oid_lookup_index + 1]?
+        contents[oid_lookup_index + 1][:offset] - oid_lookup_offset
+      else
+        # Exclude trailer hash if necessary
+        file.size - commit_hash_length - oid_lookup_offset
+      end
+
+      slice = Bytes.new(@num_commits * commit_hash_length)
+      file.read_at(oid_lookup_offset.to_i32, oid_lookup_length.to_i32, &.read(slice))
+      slice.reverse!
+
+      oids = Array.new(num_commits) do |i|
+        start = i * commit_hash_length
+        subslice = slice[start, commit_hash_length]
+        
+        subslice.to_a.map { |b| sprintf("%02x", b) }.reverse.join
+      end
+
+      oids.reverse!
     end
   end
 end
