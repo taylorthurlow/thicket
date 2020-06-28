@@ -9,6 +9,7 @@ module Thicket
     getter num_base_commit_graphs : UInt8
     
     getter num_commits : UInt32
+    getter commit_oids : Array(String)
     
     def initialize(@file_path)
       file = File.new(@file_path, "rb")
@@ -20,12 +21,16 @@ module Thicket
       @num_chunks = file.read_at(6, 1, &.read_byte).not_nil!
       @num_base_commit_graphs = file.read_at(7, 1, &.read_byte).not_nil!
 
-      # Chunk data
+      # OID Fanout
       contents = chunk_table_of_contents(file)
+      pp contents
       oid_fanout_index = contents.index { |c| c[:signature] == "OIDF" }.not_nil!
       oid_fanout_offset = contents[oid_fanout_index][:offset]
-      next_offset = contents[oid_fanout_index + 1][:offset]
-      oid_fanout_length = next_offset - oid_fanout_offset
+      oid_fanout_length = if contents[oid_fanout_index + 1]?
+        contents[oid_fanout_index + 1][:offset] - oid_fanout_offset
+      else
+        file.size - oid_fanout_offset
+      end
       slice = Bytes.new(1024)
       file.read_at(oid_fanout_offset.to_i32, oid_fanout_length.to_i32, &.read(slice))
       slice.reverse!
@@ -36,9 +41,36 @@ module Thicket
 
       @num_commits = fanout.last
 
-      puts "Total number of commits: #{@num_commits}"
+      # OID Lookup
+      oid_lookup_index = contents.index { |c| c[:signature] == "OIDL" }.not_nil!
+      oid_lookup_offset = contents[oid_lookup_index][:offset]
+      oid_lookup_length = if contents[oid_lookup_index + 1]?
+        contents[oid_lookup_index + 1][:offset] - oid_lookup_offset
+      else
+        file.size - oid_lookup_offset
+      end
+      slice = Bytes.new(@num_commits * commit_hash_length)
+      file.read_at(oid_lookup_offset.to_i32, oid_lookup_length.to_i32, &.read(slice))
+      slice.reverse!
+      @commit_oids = [] of String
+      num_commits.times do |i|
+        start = i * commit_hash_length
+        subslice = slice[start, commit_hash_length]
+        @commit_oids << subslice.to_a.map { |b| sprintf("%02x", b) }.reverse.join
+      end
+      @commit_oids.reverse!
 
       file.close
+    end
+
+    # The length of a full commit hash in bytes.
+    def commit_hash_length : UInt32
+      case @hash_version
+      when 1 # SHA-1
+        20.to_u32
+      else
+        raise "Unknown hash version identifier: #{@hash_version}"
+      end
     end
 
     private def verify_header_signature(file : File)
