@@ -29,7 +29,8 @@ module Thicket
       oid_fanout_length = if contents[oid_fanout_index + 1]?
         contents[oid_fanout_index + 1][:offset] - oid_fanout_offset
       else
-        file.size - oid_fanout_offset
+        # Exclude trailer hash if necessary
+        file.size - commit_hash_length - oid_fanout_offset
       end
       slice = Bytes.new(1024)
       file.read_at(oid_fanout_offset.to_i32, oid_fanout_length.to_i32, &.read(slice))
@@ -47,7 +48,8 @@ module Thicket
       oid_lookup_length = if contents[oid_lookup_index + 1]?
         contents[oid_lookup_index + 1][:offset] - oid_lookup_offset
       else
-        file.size - oid_lookup_offset
+        # Exclude trailer hash if necessary
+        file.size - commit_hash_length - oid_lookup_offset
       end
       slice = Bytes.new(@num_commits * commit_hash_length)
       file.read_at(oid_lookup_offset.to_i32, oid_lookup_length.to_i32, &.read(slice))
