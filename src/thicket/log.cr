@@ -1,6 +1,7 @@
 require "file_utils"
 
 require "./time_measure"
+require "./commit_graph_file"
 
 module Thicket
   class Log
@@ -10,7 +11,25 @@ module Thicket
       @count_parsed = 0
     end
 
+    def process_experimental
+      FileUtils.cd(git_working_directory)
+
+      if File.exists?("./.git/objects/info/commit-graph")
+        puts "Detected single commit-graph file, no chain present."
+        cgf = CommitGraphFile.new("./.git/objects/info/commit-graph")
+      else
+        puts "Detected commit-graph chain."
+        chain = true
+      end
+    end
+
     def print
+      if @options[:experimental]
+        process_experimental 
+
+        return
+      end
+
       FileUtils.cd(git_working_directory)
       `#{git_log_command}`.split("\n").each do |l|
         puts process_git_log_line(l)
