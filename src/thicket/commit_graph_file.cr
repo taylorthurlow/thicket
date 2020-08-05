@@ -35,6 +35,7 @@ module Thicket
       puts " Last commit: #{@commit_oids.last[0..6]}"
 
       @commit_data = parse_commit_data(file, contents, @num_commits)
+      pp @commit_oids.first
       pp @commit_data.first
 
       file.close
@@ -162,32 +163,46 @@ module Thicket
       end
 
       single_commit_data_size = commit_hash_length + 16
-      slice = Bytes.new(@num_commits * single_commit_data_size)
+      slice = Bytes.new(commit_data_length)
       file.read_at(commit_data_offset.to_i32, commit_data_length.to_i32, &.read(slice))
       slice.reverse!
 
       puts "Found #{slice.size} bytes of commit data."
 
       Array.new(num_commits) do |i|
-        subslice = slice[i, single_commit_data_size]
+        subslice = slice[i * single_commit_data_size, single_commit_data_size]
 
         root_tree_oid = subslice[0, commit_hash_length].to_a
                                                        .map { |b| sprintf("%02x", b) }
                                                        .reverse
                                                        .join
 
-        first_parent_slice = subslice[commit_hash_length, 4]
+        first_parent_start = commit_hash_length 
+        first_parent_slice = subslice[first_parent_start, 4]
         first_parent_value = first_parent_slice.to_unsafe.as(UInt32*).value
         first_parent = first_parent_value == 0x7000000 ? nil : first_parent_value
 
-        second_parent_slice = subslice[commit_hash_length, 4]
+        second_parent_start = first_parent_start + 4
+        second_parent_slice = subslice[second_parent_start, 4]
         second_parent_value = second_parent_slice.to_unsafe.as(UInt32*).value
         second_parent = second_parent_value == 0x7000000 ? nil : second_parent_value
+
+        generation_number_start = second_parent_start + 4
+        # the generation number is only the higher 30 bits, not all 32
+        generation_number_slice = subslice[generation_number_start, 4] 
+        generation_number = generation_number_slice.to_unsafe.as(UInt32*).value & 0xFFFFFFFC
+
+        # the commit time starts including the last two bits of the generation
+        # number subslice, and all 4 subsequent bytes
+        commit_time_slice = subslice[generation_number_start, 8]
+        commit_time = commit_time_slice.to_unsafe.as(UInt64*).value & 0x00000003FFFFFFFF
 
         CommitData.new(
           root_tree_oid,
           first_parent,
           second_parent,
+          generation_number,
+          commit_time,
         )
       end
     end
@@ -196,8 +211,10 @@ module Thicket
       getter root_tree_oid : String
       getter first_parent : UInt32 | Nil
       getter second_parent : UInt32 | Nil
+      getter generation_number : UInt32
+      getter commit_time : UInt64
       
-      def initialize(@root_tree_oid, @first_parent, @second_parent)
+      def initialize(@root_tree_oid, @first_parent, @second_parent, @generation_number, @commit_time)
       end
     end
   end
