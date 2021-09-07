@@ -2,7 +2,7 @@ name: thicket
 version: 0.1.4
 
 authors:
-  - Taylor Thurlow <taylorthurlow8@gmail.com>
+  - Taylor Thurlow <thurlow@hey.com>
 
 description: |
   A wrapper for git's one-line log that makes things just a bit cleaner.
