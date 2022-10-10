@@ -12,9 +12,9 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-16.04, macos-latest]
+        os: [ubuntu-20.04, macos-latest]
         include:
-          - os: ubuntu-16.04
+          - os: ubuntu-20.04
             artifact_name: thicket
             asset_name: thicket_${{ github.ref }}_linux-amd64
           - os: macos-latest
@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
 
     container:
-      image: crystallang/crystal:1.0.0
+      image: crystallang/crystal:1.6.0
 
     steps:
       - name: Checkout code
