@@ -159,7 +159,16 @@ module Thicket
     # position in the string to a right-justified location.
     private def process_author_name(author : String, line : String)
       line = line.sub("\e[34m{#{author}}\e[31m ", "")
-      author = name_to_initials(author) if @options[:initials]?
+
+      if @options[:initials]?
+        author = case author
+                 when /dependabot/
+                   "DB"
+                 else
+                   name_to_initials(author)
+                 end
+      end
+
       total_length = strip_color(line).size
       over = (total_length + author.size + 1) - terminal_width
       line = line[0...-over] if over > 0
