@@ -50,6 +50,10 @@ module Thicket
         @@options[:initials] = value
       end
 
+      parser.on("--exclude-remote-dependabot", "Exclude remote dependabot branches") do |value|
+        @@options[:exclude_remote_dependabot] = value
+      end
+
       parser.on("--main-remote=MAIN_REMOTE", "The name of the primary remote, defaults to 'origin'") do |m|
         if m.nil?
           STDERR.puts "You must provide the name of the main remote."

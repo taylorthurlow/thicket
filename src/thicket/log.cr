@@ -208,6 +208,8 @@ module Thicket
       String.build do |str|
         str << "git log --oneline --decorate --color " \
                "--graph --pretty=format:'#{format}'"
+
+        str << " --exclude=refs/remotes/*/dependabot/*" if @options.has_key?(:exclude_remote_dependabot) && @options[:exclude_remote_dependabot]
         str << " --all" if @options.has_key?(:all) && @options[:all]
       end
     end
