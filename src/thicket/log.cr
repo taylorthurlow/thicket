@@ -50,11 +50,22 @@ module Thicket
     end
 
     private def name_to_initials(name : String) : String
-      names = name.strip.split(/\s+/)
+      names = name.strip.upcase.split(/\s+/)
 
-      return name unless names.size >= 2
+      case names.size
+      when 1
+        name = names.first
 
-      names.map { |name| name.chars.first }.join
+        if name.chars.size > 1
+          return name.chars.first(2).join
+        else
+          return name
+        end
+      when 2..
+        return names.map { |name| name.chars.first }.join
+      else
+        return ""
+      end
     end
 
     # Takes an input log string and a commit date/time and replaces it in the
